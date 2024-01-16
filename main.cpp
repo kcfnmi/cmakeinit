@@ -79,7 +79,7 @@ pair<int, int> cmakeversion_identify()
             auto list = split(line, " ");
             list = split(list.back(), ".");
             version.first = stoi(list.at(0));
-            version.first = stoi(list.at(1));
+            version.second = stoi(list.at(1));
         }
 
     filesystem::remove(cmakeversion_txt);
