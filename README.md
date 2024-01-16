@@ -3,6 +3,13 @@
 cmakeinit - for those times cmakelists.txt does not exist
 
 
+#### How to Build
+
+1. With double-click on the `.sublime-project` it should open on SublimeText
+2. Open `main.cpp`
+3. `Command+Shift+B` to build
+
+
 #### How to use
 
 ```
