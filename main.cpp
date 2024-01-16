@@ -2,6 +2,7 @@
 #include <fstream>
 #include <filesystem>
 #include <vector>
+#include <cstdlib>
 
 using namespace std;
 
@@ -46,27 +47,70 @@ void cmakelists_create(Project p)
         file << i << endl;
 }
 
-int main()
+vector<string> split(const string& line, string delimiter)
+{
+    vector<string> list;
+
+    size_t last = 0;
+    size_t next = 0;
+    while ((next = line.find(delimiter, last)) != string::npos)
+    {
+        list.push_back(line.substr(last, next - last));
+        last = next + 1; 
+    }
+    list.push_back(line.substr(last));
+
+    return list;
+}
+
+pair<int, int> cmakeversion_identify()
+{
+    pair<int, int> version{3, 20};
+
+    string cmakeversion_txt = "_cmakeversion.txt";
+    string command = "cmake --version > " + cmakeversion_txt;
+    system(command.data());
+
+    ifstream file_cmakeversion(cmakeversion_txt);
+    string line;
+    while (getline(file_cmakeversion, line))
+        if (line.find("version") != string::npos)
+        {
+            auto list = split(line, " ");
+            list = split(list.back(), ".");
+            version.first = stoi(list.at(0));
+            version.first = stoi(list.at(1));
+        }
+
+    filesystem::remove(cmakeversion_txt);
+
+    return version;
+}
+
+int main(int args, char** argv)
 {
     cout << "cmakeinit - for those times cmakelists.txt does not exist" << endl;
 
+    vector<string> files;
+    for (int i = 1; args > 1 && i < args; ++i)
+        files.push_back(argv[i]);
+
     filesystem::path cwd = std::filesystem::current_path();
+
+    string project = cwd.stem();
 
     bool cmakelists_exist = filesystem::exists(CMAKELISTS);
 
     if (cmakelists_exist)
-        cout << cwd.append(CMAKELISTS) << " exist" << endl;
-    else
     {
-        cout << "Create? Yes(y) or No(n)?" << endl;
-        string answer;
-        cin >> answer;
-        if (answer == "n" || answer == "N") {}
-        else
-        {
-            cmakelists_create({{3, 20}, "TheProject", {"main.cpp"}});
-        }
+        cout << cwd.append(CMAKELISTS) << " already exist" << endl;
+        return 0;
     }
+
+    auto v = cmakeversion_identify();
+    cout << "identified cmake version: " << v.first << "." << v.second << endl;
+    
+    cmakelists_create({v, project, files});
 
     return 0;
 }
