@@ -1,8 +1,34 @@
 {
-	"folders":
-	[
-		{
+    "folders":
+    [
+        {
             "path": ".",
         }
-	]
+    ],
+    "settings":
+    {
+        "translate_tabs_to_spaces": true,
+    },
+    "build_systems":
+    [
+        {
+            "name": "cmakeinit Build",
+            "target": "terminus_exec",
+
+            "cancel": "terminus_cancel_build", 
+
+            "shell_cmd": "g++ -std=c++17 \"${file}\" -o \"${file_path}/${file_base_name}\"",
+            "file_regex": "^(..[^:]*):([0-9]+):?([0-9]+)?:? (.*)$",
+            "working_dir": "${file_path}",
+            "selector": "source.c++",
+
+            "variants":
+            [
+                {
+                    "name": "Run",
+                    "shell_cmd": "g++ -std=c++17 \"${file}\" -o \"${file_path}/${file_base_name}\" && \"${file_path}/${file_base_name}\""
+                }
+    ]
+        }
+    ]
 }
