@@ -87,12 +87,25 @@ pair<int, int> cmakeversion_identify()
     return version;
 }
 
+void show_help()
+{
+    cout << "You are expected to inform the source files to build the project" << endl;
+    cout << "i.e. cmakeinit main.cpp main.h" << endl;
+
+}
+
 int main(int args, char** argv)
 {
-    cout << "cmakeinit - for those times cmakelists.txt does not exist" << endl;
+    cout << "cmakeinit - for those times cmakelists.txt is not there yet" << endl;
+
+    if (args < 2)
+    {
+        show_help();
+        return 0;
+    }
 
     vector<string> files;
-    for (int i = 1; args > 1 && i < args; ++i)
+    for (int i = 1; i < args; ++i)
         files.push_back(argv[i]);
 
     filesystem::path cwd = std::filesystem::current_path();
@@ -108,9 +121,10 @@ int main(int args, char** argv)
     }
 
     auto v = cmakeversion_identify();
-    cout << "identified cmake version: " << v.first << "." << v.second << endl;
-    
+
     cmakelists_create({v, project, files});
+
+    cout << "CMakeLists.txt created with cmake version: " << v.first << "." << v.second << endl;
 
     return 0;
 }
