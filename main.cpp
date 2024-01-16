@@ -2,11 +2,24 @@
 #include <fstream>
 #include <filesystem>
 #include <vector>
-#include <cstdlib>
+#include <map>
 
 using namespace std;
 
 const string CMAKELISTS = "CMakeLists.txt";
+
+const char* menuopt_cmakelists = "";
+const char* menuopt_help = "--help";
+const char* menuopt_version = "--version";
+
+const string description = "You are expected to inform the source files to build the project\n"
+"i.e. ./cmakeinit main.cpp main.h";
+
+const std::map<string, string> menu = {
+                                      {menuopt_cmakelists, description},
+                                      {   menuopt_version, "Show version"},
+                                      {      menuopt_help, "Show help menu"} 
+                                      };
 
 struct Project
 {
@@ -99,11 +112,41 @@ pair<int, int> cmakeversion_identify()
     return version;
 }
 
-void show_help()
+pair<string, string> program_version()
 {
-    cout << "You are expected to inform the source files to build the project" << endl;
-    cout << "i.e. cmakeinit main.cpp main.h" << endl;
+    string commit_txt = "_commit.txt";
+    string command = "git rev-parse HEAD > " + commit_txt;
+    system(command.data());
 
+    ifstream file(commit_txt);
+    string line;
+    getline(file, line);
+    string commit = line;
+    filesystem::remove(commit_txt);
+
+    string timestamp = __TIMESTAMP__;
+
+    pair<string, string> v{timestamp, commit};
+
+    return v;
+}
+
+string parse_args(int args, char** argv)
+{
+    if (args == 2 && string(argv[1]) == menuopt_help)
+    {
+        return menuopt_help;
+    }
+    else if (args == 2 && string(argv[1]) == menuopt_version)
+    {
+        return menuopt_version;
+    }
+    else
+    {
+        return menuopt_cmakelists;
+    }
+
+    return "undefined";
 }
 
 int main(int args, char** argv)
@@ -112,31 +155,41 @@ int main(int args, char** argv)
 
     if (args < 2)
     {
-        show_help();
+        cout << "Usage: ./cmake --help" << endl;
         return 0;
     }
 
-    vector<string> files;
-    for (int i = 1; i < args; ++i)
-        files.push_back(argv[i]);
+    auto opt = parse_args(args, argv);
 
-    filesystem::path cwd = std::filesystem::current_path();
-
-    string project = cwd.stem();
-
-    bool cmakelists_exist = filesystem::exists(CMAKELISTS);
-
-    if (cmakelists_exist)
+    if (opt == menuopt_help)
     {
-        cout << cwd.append(CMAKELISTS) << " already exist" << endl;
-        return 0;
+        for (auto& [k, v] : menu)
+            cout << k << " " << v << endl;
     }
+    else if (opt == menuopt_version)
+    {
+        auto v = program_version();
+        cout << "Build version " << v.first << " of " << v.second << endl;
+    }
+    else if (opt == menuopt_cmakelists)
+    {
+        filesystem::path cwd = std::filesystem::current_path();
+        string project = cwd.stem();
 
-    auto v = cmakeversion_identify();
+        if (filesystem::exists(CMAKELISTS))
+        {
+            cout << cwd.append(CMAKELISTS) << " already exist" << endl;
+            return 0;
+        }
 
-    cmakelists_create({v, project, files});
+        vector<string> files;
+        for (int i = 1; i < args; ++i)
+            files.push_back(argv[i]);
 
-    cout << "CMakeLists.txt created with cmake version: " << v.first << "." << v.second << endl;
+        auto v = cmakeversion_identify();
+        cmakelists_create({v, project, files});
+        cout << "CMakeLists.txt created with cmake version: " << v.first << "." << v.second << endl;
+    }
 
     return 0;
 }
