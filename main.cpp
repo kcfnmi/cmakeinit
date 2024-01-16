@@ -8,17 +8,21 @@ using namespace std;
 
 const string CMAKELISTS = "CMakeLists.txt";
 
+const string SUBLIMEPROJECT = "a.sublime-project";
+
 const char* menuopt_cmakelists = "";
 const char* menuopt_help = "--help";
 const char* menuopt_version = "--version";
+const char* menuopt_sublcpp = "--sublcpp";
 
 const string description = "You are expected to inform the source files to build the project\n"
-"i.e. ./cmakeinit main.cpp main.h";
+"i.e.: ./cmakeinit main.cpp main.h";
 
 const std::map<string, string> menu = {
                                       {menuopt_cmakelists, description},
+                                      {      menuopt_help, "Show help menu"},
                                       {   menuopt_version, "Show version"},
-                                      {      menuopt_help, "Show help menu"} 
+                                      {   menuopt_sublcpp, "Generates .sublime-project for C++"},
                                       };
 
 struct Project
@@ -39,7 +43,7 @@ struct CMakeProject
     string executable;
 };
 
-void cmakelists_create(Project p)
+void cmakelists_create(const Project& p)
 {
     CMakeProject project;
 
@@ -72,7 +76,66 @@ void cmakelists_create(Project p)
         file << i << endl;
 }
 
-vector<string> split(const string& line, string delimiter)
+void replace(string& str, const string& substr_src, const string& substr_dst)
+{
+    size_t index = 0;
+    while (true) {
+         index = str.find(substr_src, index);
+         if (index == std::string::npos) 
+            break;
+    
+         str.replace(index, substr_src.size(), substr_dst);
+    
+         index += substr_dst.size();
+    }
+}
+
+void sublcpp_create(const string& projectname)
+{
+    string subl_project = R"(
+{
+    "folders":
+    [
+        {
+            "path": ".",
+        }
+    ],
+    "settings":
+    {
+        "translate_tabs_to_spaces": true,
+    },
+    "build_systems":
+    [
+        {
+            "name": "the_project_name Build",
+            "target": "terminus_exec",
+
+            "cancel": "terminus_cancel_build", 
+
+            "shell_cmd": "g++ -std=c++17 \"${file}\" -o \"${file_path}/the_project_name\"",
+            "file_regex": "^(..[^:]*):([0-9]+):?([0-9]+)?:? (.*)$",
+            "working_dir": "${file_path}",
+            "selector": "source.c++",
+
+            "variants":
+            [
+                {
+                    "name": "Run",
+                    "shell_cmd": "g++ -std=c++17 \"${file}\" -o \"${file_path}/the_project_name\" && \"${file_path}/the_project_name\""
+                }
+    ]
+        }
+    ]
+}
+)";
+
+    replace(subl_project, "the_project_name", projectname);
+
+    ofstream file(SUBLIMEPROJECT);
+    file << subl_project << endl;
+}
+
+vector<string> split(const string& line, const string& delimiter)
 {
     vector<string> list;
 
@@ -133,6 +196,8 @@ pair<string, string> program_version()
 
 string parse_args(int args, char** argv)
 {
+    string opt = "undefined";
+
     if (args == 2 && string(argv[1]) == menuopt_help)
     {
         return menuopt_help;
@@ -141,12 +206,22 @@ string parse_args(int args, char** argv)
     {
         return menuopt_version;
     }
+    else if (args == 2 && string(argv[1]) == menuopt_sublcpp)
+    {
+        return menuopt_sublcpp;
+    }
+    else if (args == 2 && string(argv[1]).find("-") == 0)
+    {
+        cout << "unknown arg(s):" << endl;
+        for (int i = 1; i < args; ++i)
+            cout << argv[i] << endl;
+    }
     else
     {
         return menuopt_cmakelists;
     }
 
-    return "undefined";
+    return opt;
 }
 
 int main(int args, char** argv)
@@ -164,12 +239,12 @@ int main(int args, char** argv)
     if (opt == menuopt_help)
     {
         for (auto& [k, v] : menu)
-            cout << k << " " << v << endl;
+            cout << k << ": " << v << endl;
     }
     else if (opt == menuopt_version)
     {
         auto v = program_version();
-        cout << "Build version " << v.first << " of " << v.second << endl;
+        cout << "https://github.com/kcfnmi/cmakeinit" << " " << v.second << " build on " << v.first << endl;
     }
     else if (opt == menuopt_cmakelists)
     {
@@ -188,7 +263,21 @@ int main(int args, char** argv)
 
         auto v = cmakeversion_identify();
         cmakelists_create({v, project, files});
-        cout << "CMakeLists.txt created with cmake version: " << v.first << "." << v.second << endl;
+        cout << CMAKELISTS << " created with cmake version: " << v.first << "." << v.second << endl;
+    }
+    else if (opt == menuopt_sublcpp)
+    {
+        filesystem::path cwd = std::filesystem::current_path();
+        string project = cwd.stem();
+
+        if (filesystem::exists(SUBLIMEPROJECT))
+        {
+            cout << cwd.append(SUBLIMEPROJECT) << " already exist" << endl;
+            return 0;
+        }
+
+        sublcpp_create(project);
+        cout << SUBLIMEPROJECT << " created" << endl;
     }
 
     return 0;
