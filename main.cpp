@@ -18,8 +18,11 @@ struct Project
 struct CMakeProject 
 {
     string version;
-    string cpp_standard;
+    string cxx_standard;
+    string cxx_standard_req;
     string name;
+    string verbose;
+    string cxx_flags;
     string executable;
 };
 
@@ -29,8 +32,14 @@ void cmakelists_create(Project p)
 
     string version = to_string(p.cmake_version.first) +"."+ to_string(p.cmake_version.second);
     project.version = "cmake_minimum_required(VERSION "+ version +")";
-    project.cpp_standard = "set(CMAKE_CXX_STANDARD 17)";
+    project.cxx_standard = "set(CMAKE_CXX_STANDARD 17)";
+    project.cxx_standard_req = "set(CMAKE_CXX_STANDARD_REQUIRED ON)";
     project.name = "project("+ p.name +")";
+
+    project.verbose = "set(CMAKE_VERBOSE_MAKEFILE ON CACHE BOOL \"ON\" FORCE)";
+
+    project.cxx_flags = "set(CMAKE_CXX_FLAGS \"-Wall -Wextra -pedantic -fsanitize=address,undefined\")";
+
     string files;
     for (auto& f : p.source)
         files.append(" "+ f);
@@ -38,8 +47,11 @@ void cmakelists_create(Project p)
 
     vector<string> list;
     list.push_back(project.version);
-    list.push_back(project.cpp_standard);
+    list.push_back(project.cxx_standard);
+    list.push_back(project.cxx_standard_req);
     list.push_back(project.name);
+    list.push_back(project.verbose); 
+    list.push_back(project.cxx_flags); 
     list.push_back(project.executable); 
 
     ofstream file(CMAKELISTS);
