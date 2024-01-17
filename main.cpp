@@ -8,13 +8,6 @@ using namespace std;
 
 const string CMAKELISTS = "CMakeLists.txt";
 
-string SUBLIMEPROJECT(const string& projectname)
-{
-    string s = ".sublime-project";
-    return s;
-}
-
-
 const char* menuopt_cmakelists = "";
 const char* menuopt_help = "--help";
 const char* menuopt_version = "--version";
@@ -106,7 +99,7 @@ void replace(string& str, const string& substr_src, const string& substr_dst)
     }
 }
 
-void sublcpp_create(const string& projectname)
+void sublcpp_create(const string& projectname, const char* options)
 {
     string subl_project = R"(
 {
@@ -128,7 +121,7 @@ void sublcpp_create(const string& projectname)
 
             "cancel": "terminus_cancel_build", 
 
-            "shell_cmd": "g++ -std=c++17 \"${file}\" -o \"${file_path}/THEPROJECTNAME\"",
+            "shell_cmd": "g++ THEOPTIONS \"${file}\" -o \"${file_path}/THEPROJECTNAME\"",
             "file_regex": "^(..[^:]*):([0-9]+):?([0-9]+)?:? (.*)$",
             "working_dir": "${file_path}",
             "selector": "source.c++",
@@ -137,7 +130,7 @@ void sublcpp_create(const string& projectname)
             [
                 {
                     "name": "Run",
-                    "shell_cmd": "g++ -std=c++17 \"${file}\" -o \"${file_path}/THEPROJECTNAME\" && \"${file_path}/THEPROJECTNAME\""
+                    "shell_cmd": "g++ THEOPTIONS \"${file}\" -o \"${file_path}/THEPROJECTNAME\" && \"${file_path}/THEPROJECTNAME\""
                 }
             ]
         }
@@ -149,6 +142,8 @@ void sublcpp_create(const string& projectname)
     replace(subl_project, "THEPROJECTNAME", projectname);
 
     replace(subl_project, "TIMESTAMPCREATED", timestamp());
+
+    replace(subl_project, "THEOPTIONS", options);
 
     ofstream file(projectname+".sublime-project");
     file << subl_project << endl;
@@ -295,7 +290,7 @@ int main(int args, char** argv)
             return 0;
         }
 
-        sublcpp_create(projectname);
+        sublcpp_create(project, "-std=c++17 -g -Wall -Wextra -pedantic -fsanitize=address,undefined");
         cout << project+".sublime-project" << " created" << endl;
     }
 
