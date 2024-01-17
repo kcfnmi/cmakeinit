@@ -8,7 +8,12 @@ using namespace std;
 
 const string CMAKELISTS = "CMakeLists.txt";
 
-const string SUBLIMEPROJECT = "a.sublime-project";
+string SUBLIMEPROJECT(const string& projectname)
+{
+    string s = ".sublime-project";
+    return s;
+}
+
 
 const char* menuopt_cmakelists = "";
 const char* menuopt_help = "--help";
@@ -42,6 +47,17 @@ struct CMakeProject
     string cxx_flags;
     string executable;
 };
+
+string timestamp(const char* format="%Y%m%d%H%M%S", const size_t size = 14)
+{
+    auto t = time(nullptr);
+    
+    string s(size, ' ');
+
+    std::strftime(s.data(), size, format, localtime(&t));
+
+    return s;
+}
 
 void cmakelists_create(const Project& p)
 {
@@ -107,12 +123,12 @@ void sublcpp_create(const string& projectname)
     "build_systems":
     [
         {
-            "name": "the_project_name Build",
+            "name": "THEPROJECTNAME Build",
             "target": "terminus_exec",
 
             "cancel": "terminus_cancel_build", 
 
-            "shell_cmd": "g++ -std=c++17 \"${file}\" -o \"${file_path}/the_project_name\"",
+            "shell_cmd": "g++ -std=c++17 \"${file}\" -o \"${file_path}/THEPROJECTNAME\"",
             "file_regex": "^(..[^:]*):([0-9]+):?([0-9]+)?:? (.*)$",
             "working_dir": "${file_path}",
             "selector": "source.c++",
@@ -121,17 +137,20 @@ void sublcpp_create(const string& projectname)
             [
                 {
                     "name": "Run",
-                    "shell_cmd": "g++ -std=c++17 \"${file}\" -o \"${file_path}/the_project_name\" && \"${file_path}/the_project_name\""
+                    "shell_cmd": "g++ -std=c++17 \"${file}\" -o \"${file_path}/THEPROJECTNAME\" && \"${file_path}/THEPROJECTNAME\""
                 }
-    ]
+            ]
         }
-    ]
+    ],
+    "created": "TIMESTAMPCREATED",
 }
 )";
 
-    replace(subl_project, "the_project_name", projectname);
+    replace(subl_project, "THEPROJECTNAME", projectname);
 
-    ofstream file(SUBLIMEPROJECT);
+    replace(subl_project, "TIMESTAMPCREATED", timestamp());
+
+    ofstream file(projectname+".sublime-project");
     file << subl_project << endl;
 }
 
@@ -187,9 +206,9 @@ pair<string, string> program_version()
     string commit = line;
     filesystem::remove(commit_txt);
 
-    string timestamp = __TIMESTAMP__;
+    string time_stamp = timestamp();
 
-    pair<string, string> v{timestamp, commit};
+    pair<string, string> v{time_stamp, commit};
 
     return v;
 }
@@ -270,14 +289,14 @@ int main(int args, char** argv)
         filesystem::path cwd = std::filesystem::current_path();
         string project = cwd.stem();
 
-        if (filesystem::exists(SUBLIMEPROJECT))
+        if (filesystem::exists(project+".sublime-project"))
         {
-            cout << cwd.append(SUBLIMEPROJECT) << " already exist" << endl;
+            cout << cwd.append(project+".sublime-project") << " already exist" << endl;
             return 0;
         }
 
-        sublcpp_create(project);
-        cout << SUBLIMEPROJECT << " created" << endl;
+        sublcpp_create(projectname);
+        cout << project+".sublime-project" << " created" << endl;
     }
 
     return 0;
