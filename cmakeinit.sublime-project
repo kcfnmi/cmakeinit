@@ -37,7 +37,7 @@
             "name": "DebugConsoleConf",
             "type": "lldb",
             "request": "launch",
-            "program": "${project_base_name}",
+            "program": "${project_path}",
             "cwd": "${project_path}",
             "terminal": "external",
         },

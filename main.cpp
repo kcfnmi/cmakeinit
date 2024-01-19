@@ -136,6 +136,16 @@ void sublcpp_create(const string& projectname, const char* options)
         }
     ],
     "created": "TIMESTAMPCREATED",
+    "debugger_configurations": [
+        {
+            "name": "DebugConsoleConf",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${project_path}",
+            "cwd": "${project_path}",
+            "terminal": "external",
+        },
+    ],
 }
 )";
 
