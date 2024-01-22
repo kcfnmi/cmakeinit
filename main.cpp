@@ -85,18 +85,25 @@ void cmakelists_create(const Project& p)
         file << i << endl;
 }
 
-void replace(string& str, const string& substr_src, const string& substr_dst)
+void replace(string& str, const string& substr_old, const string& substr_new)
 {
     size_t index = 0;
     while (true) {
-         index = str.find(substr_src, index);
+         index = str.find(substr_old, index);
          if (index == std::string::npos) 
             break;
     
-         str.replace(index, substr_src.size(), substr_dst);
+         str.replace(index, substr_old.size(), substr_new);
     
-         index += substr_dst.size();
+         index += substr_new.size();
     }
+}
+
+string replace(string str, const vector<pair<string, string>>& substrs)
+{
+    for (auto& [substr_old, substr_new] : substrs)
+        replace(str, substr_old, substr_new);
+    return str;
 }
 
 void sublcpp_create(const string& projectname, const char* options)
@@ -273,7 +280,7 @@ int main(int args, char** argv)
     else if (opt == menuopt_cmakelists)
     {
         filesystem::path cwd = std::filesystem::current_path();
-        string project = cwd.stem();
+        string project = replace(cwd.stem(), {{" ", ""}});
 
         if (filesystem::exists(CMAKELISTS))
         {
@@ -292,7 +299,7 @@ int main(int args, char** argv)
     else if (opt == menuopt_sublcpp)
     {
         filesystem::path cwd = std::filesystem::current_path();
-        string project = cwd.stem();
+        string project = replace(cwd.stem(), {{" ", ""}});
 
         if (filesystem::exists(project+".sublime-project"))
         {
